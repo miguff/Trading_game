@@ -1,0 +1,321 @@
+const startButton = document.getElementById('start-round');
+const restartButton = document.getElementById('restart-game');
+const totalRoundsInput = document.getElementById('total-rounds');
+const durationSecondsInput = document.getElementById('duration-seconds');
+const messageBox = document.getElementById('admin-message');
+const statusText = document.getElementById('status-text');
+const roundProgress = document.getElementById('round-progress');
+const configPanel = document.getElementById('config-panel');
+const scenarioList = document.getElementById('scenario-list');
+
+let gameStatus = null;
+let scenarioSchedule = {};
+let adminOverrides = {};
+let userEditedDuration = false;
+let userEditedTotalRounds = false;
+
+// Generate random scenario
+function randomScenario() {
+    const scenarios = ['up', 'down', 'oscillate'];
+    return scenarios[Math.floor(Math.random() * scenarios.length)];
+}
+
+// Get display name for scenario
+function scenarioDisplayName(scenario) {
+    const names = {
+        'up': 'Up ↑',
+        'down': 'Down ↓',
+        'oscillate': 'Oscillate ~'
+    };
+    return names[scenario] || scenario;
+}
+
+// Generate or update scenario schedule based on total rounds
+function generateSchedule(totalRounds) {
+    const schedule = {};
+    for (let i = 1; i <= totalRounds; i++) {
+        // Keep existing scenario if available, otherwise generate new
+        if (scenarioSchedule[i] && !adminOverrides[i]) {
+            schedule[i] = scenarioSchedule[i];
+        } else if (adminOverrides[i]) {
+            schedule[i] = adminOverrides[i];
+        } else {
+            schedule[i] = randomScenario();
+        }
+    }
+    scenarioSchedule = schedule;
+    renderScenarioList(totalRounds);
+    // Sync to server
+    syncScenarioSchedule(totalRounds);
+}
+
+// Render the scenario list UI
+function renderScenarioList(totalRounds) {
+    if (!scenarioList) return;
+
+    let html = '';
+    for (let i = 1; i <= totalRounds; i++) {
+        const scenario = adminOverrides[i] || scenarioSchedule[i] || randomScenario();
+        const isOverridden = adminOverrides[i] ? 'overridden' : '';
+        const isNextRound = gameStatus && i === gameStatus.next_round_number ? 'next-round' : '';
+        const isPastRound = gameStatus && i < gameStatus.next_round_number ? 'past-round' : '';
+
+        html += `
+            <div class="scenario-item ${isOverridden} ${isNextRound} ${isPastRound}" data-round="${i}">
+                <span class="round-num">Round ${i}</span>
+                <select class="scenario-select" data-round="${i}" ${isPastRound ? 'disabled' : ''}>
+                    <option value="up" ${scenario === 'up' ? 'selected' : ''}>Up ↑</option>
+                    <option value="down" ${scenario === 'down' ? 'selected' : ''}>Down ↓</option>
+                    <option value="oscillate" ${scenario === 'oscillate' ? 'selected' : ''}>Oscillate ~</option>
+                </select>
+                ${adminOverrides[i] ? '<span class="override-badge">Overridden</span>' : ''}
+            </div>
+        `;
+    }
+    scenarioList.innerHTML = html;
+
+    // Add event listeners to selects
+    document.querySelectorAll('.scenario-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const roundNum = parseInt(e.target.dataset.round, 10);
+            const newScenario = e.target.value;
+            adminOverrides[roundNum] = newScenario;
+            scenarioSchedule[roundNum] = newScenario;
+            renderScenarioList(totalRounds);
+            syncScenarioSchedule(totalRounds);
+        });
+    });
+}
+
+// Sync scenario schedule to server
+async function syncScenarioSchedule(totalRounds) {
+    try {
+        await fetch('/admin/scenario-schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                total_rounds: totalRounds,
+                overrides: adminOverrides
+            }),
+        });
+    } catch (error) {
+        console.error('Failed to sync scenario schedule:', error);
+    }
+}
+
+// Fetch scenario schedule from server
+async function fetchScenarioSchedule() {
+    try {
+        const response = await fetch('/admin/scenario-schedule');
+        if (response.ok) {
+            const data = await response.json();
+            scenarioSchedule = data.scenario_schedule || {};
+            adminOverrides = data.admin_overrides || {};
+            if (data.total_rounds) {
+                totalRoundsInput.value = data.total_rounds;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch scenario schedule:', error);
+    }
+}
+
+async function fetchGameStatus() {
+    try {
+        const response = await fetch('/admin/game-status');
+        if (!response.ok) {
+            throw new Error('Failed to fetch game status');
+        }
+        gameStatus = await response.json();
+        // Update local schedule from server
+        if (gameStatus.scenario_schedule) {
+            scenarioSchedule = gameStatus.scenario_schedule;
+        }
+        if (gameStatus.admin_overrides) {
+            adminOverrides = gameStatus.admin_overrides;
+        }
+        updateUI();
+    } catch (error) {
+        statusText.textContent = 'Error loading status';
+    }
+}
+
+function updateUI() {
+    if (!gameStatus) return;
+
+    const { current_round, next_round_number, total_rounds, round_active, game_started, game_complete, round_duration_seconds } = gameStatus;
+
+    // Update status text
+    if (game_complete) {
+        statusText.textContent = 'Game Complete';
+        roundProgress.textContent = `All ${total_rounds} rounds finished`;
+        startButton.disabled = true;
+        startButton.textContent = 'Game Over';
+    } else if (round_active) {
+        statusText.textContent = `Round ${current_round} in progress`;
+        roundProgress.textContent = `Round ${current_round} of ${total_rounds}`;
+        startButton.disabled = true;
+        startButton.textContent = 'Round Active';
+    } else if (game_started) {
+        statusText.textContent = 'Between Rounds';
+        roundProgress.textContent = `Round ${current_round} of ${total_rounds} complete`;
+        startButton.disabled = false;
+        const isFinalRound = next_round_number >= total_rounds;
+        startButton.textContent = isFinalRound ? `Start Final Round (${next_round_number})` : `Start Round ${next_round_number}`;
+    } else {
+        statusText.textContent = 'Game Not Started';
+        roundProgress.textContent = `${total_rounds} rounds configured`;
+        startButton.disabled = false;
+        startButton.textContent = 'Start Round 1';
+    }
+
+    // Update input values from server state only if user hasn't manually edited them
+    if (!userEditedTotalRounds) {
+        totalRoundsInput.value = total_rounds;
+    }
+    if (!userEditedDuration) {
+        durationSecondsInput.value = round_duration_seconds;
+    }
+
+    // Disable config inputs after game starts
+    if (game_started) {
+        totalRoundsInput.disabled = true;
+    }
+
+    // Render scenario list
+    renderScenarioList(total_rounds);
+}
+
+// Track user edits on inputs
+durationSecondsInput.addEventListener('input', () => {
+    userEditedDuration = true;
+});
+
+totalRoundsInput.addEventListener('input', () => {
+    userEditedTotalRounds = true;
+});
+
+// Handle total rounds change
+totalRoundsInput.addEventListener('change', () => {
+    const totalRounds = parseInt(totalRoundsInput.value, 10);
+    if (!isNaN(totalRounds) && totalRounds >= 1) {
+        generateSchedule(totalRounds);
+    }
+});
+
+startButton.addEventListener('click', async () => {
+    messageBox.textContent = '';
+    messageBox.classList.remove('error');
+    const totalRounds = parseInt(totalRoundsInput.value, 10);
+    const durationSeconds = parseInt(durationSecondsInput.value, 10);
+
+    // Validate inputs
+    if (isNaN(totalRounds) || totalRounds < 1) {
+        messageBox.textContent = 'Total rounds must be at least 1.';
+        messageBox.classList.add('error');
+        return;
+    }
+    if (isNaN(durationSeconds) || durationSeconds < 10) {
+        messageBox.textContent = 'Round duration must be at least 10 seconds.';
+        messageBox.classList.add('error');
+        return;
+    }
+
+    // Ensure scenario schedule exists
+    if (Object.keys(scenarioSchedule).length !== totalRounds) {
+        generateSchedule(totalRounds);
+    }
+
+    // Get scenario for the next round to start
+    const nextRoundNumber = gameStatus ? gameStatus.next_round_number : 1;
+    const scenario = adminOverrides[nextRoundNumber] || scenarioSchedule[nextRoundNumber] || 'up';
+
+    try {
+        const response = await fetch('/admin/start-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                scenario,
+                total_rounds: totalRounds,
+                duration_seconds: durationSeconds
+            }),
+        });
+        if (!response.ok) {
+            const body = await response.json();
+            throw new Error(body.detail || 'Unable to start round');
+        }
+        const result = await response.json();
+        messageBox.textContent = `Round ${result.scenario} ${result.status} (${result.total_rounds} total rounds, ${result.duration_seconds}s each).`;
+        // Refresh status after starting
+        await fetchGameStatus();
+    } catch (error) {
+        messageBox.textContent = error.message || 'Start round failed.';
+        messageBox.classList.add('error');
+    }
+});
+
+// Restart Game button handler
+restartButton.addEventListener('click', async () => {
+    messageBox.textContent = '';
+    messageBox.classList.remove('error');
+
+    // Confirmation prompt
+    const confirmed = confirm('Are you sure you want to restart the game? This will remove all players and reset scores.');
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/admin/restart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) {
+            const body = await response.json();
+            throw new Error(body.detail || 'Unable to restart game');
+        }
+        const result = await response.json();
+
+        // Clear local state
+        scenarioSchedule = {};
+        adminOverrides = {};
+        userEditedDuration = false;
+        userEditedTotalRounds = false;
+
+        // Reset inputs to defaults
+        totalRoundsInput.value = 5;
+        totalRoundsInput.disabled = false;
+        durationSecondsInput.value = 90;
+
+        // Clear scenario list
+        if (scenarioList) {
+            scenarioList.innerHTML = '';
+        }
+
+        messageBox.textContent = 'Game restarted.';
+
+        // Refresh status
+        await fetchGameStatus();
+    } catch (error) {
+        messageBox.textContent = error.message || 'Restart game failed.';
+        messageBox.classList.add('error');
+    }
+});
+
+// Initial setup
+async function init() {
+    await fetchScenarioSchedule();
+    await fetchGameStatus();
+
+    // Generate schedule if empty
+    const totalRounds = parseInt(totalRoundsInput.value, 10);
+    if (Object.keys(scenarioSchedule).length === 0 && !isNaN(totalRounds)) {
+        generateSchedule(totalRounds);
+    }
+}
+
+// Poll for game status every 2 seconds
+setInterval(fetchGameStatus, 2000);
+
+// Initial fetch
+init();

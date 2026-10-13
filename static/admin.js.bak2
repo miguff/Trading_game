@@ -1,0 +1,517 @@
+/**
+ * Admin Panel JavaScript for Energy Trading Game
+ * Module A: Admin / Game Master Panel
+ */
+
+// DOM Elements - Login
+const loginSection = document.getElementById('login-section');
+const adminPanel = document.getElementById('admin-panel');
+const adminPinInput = document.getElementById('admin-pin');
+const loginButton = document.getElementById('login-button');
+const loginMessage = document.getElementById('login-message');
+const logoutButton = document.getElementById('logout-button');
+
+// DOM Elements - Status
+const statusText = document.getElementById('status-text');
+const timerDisplay = document.getElementById('timer-display');
+const roundProgress = document.getElementById('round-progress');
+const currentScenario = document.getElementById('current-scenario');
+const messageBox = document.getElementById('admin-message');
+
+// DOM Elements - Controls
+const startButton = document.getElementById('start-round');
+const pauseButton = document.getElementById('pause-round');
+const resumeButton = document.getElementById('resume-round');
+const endButton = document.getElementById('end-round');
+const restartButton = document.getElementById('restart-game');
+
+// DOM Elements - Configuration
+const totalRoundsInput = document.getElementById('total-rounds');
+const durationSecondsInput = document.getElementById('duration-seconds');
+const nextScenarioSelect = document.getElementById('next-scenario');
+const durationHint = document.getElementById('duration-hint');
+const scenarioHint = document.getElementById('scenario-hint');
+
+// DOM Elements - Player Overview
+const playerCount = document.getElementById('player-count');
+const playersTbody = document.getElementById('players-tbody');
+
+// State
+let isAuthenticated = false;
+let gameStatus = null;
+let userEditedDuration = false;
+let userEditedTotalRounds = false;
+let pollingInterval = null;
+
+// ============================================================================
+// Authentication
+// ============================================================================
+
+async function login() {
+    const pin = adminPinInput.value.trim();
+    if (!pin) {
+        showLoginMessage('Please enter PIN', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.authenticated) {
+            isAuthenticated = true;
+            showAdminPanel();
+            showMessage('Login successful', 'success');
+            startPolling();
+        } else {
+            showLoginMessage(data.error || 'Invalid PIN', 'error');
+        }
+    } catch (error) {
+        showLoginMessage('Login failed. Please try again.', 'error');
+        console.error('Login error:', error);
+    }
+}
+
+async function logout() {
+    try {
+        await fetch('/api/admin/logout', {
+            method: 'POST',
+            credentials: 'same-origin'
+        });
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+
+    isAuthenticated = false;
+    stopPolling();
+    showLoginPanel();
+    adminPinInput.value = '';
+}
+
+function showLoginPanel() {
+    loginSection.classList.remove('hidden');
+    adminPanel.classList.add('hidden');
+}
+
+function showAdminPanel() {
+    loginSection.classList.add('hidden');
+    adminPanel.classList.remove('hidden');
+}
+
+function showLoginMessage(text, type) {
+    loginMessage.textContent = text;
+    loginMessage.className = type;
+}
+
+// ============================================================================
+// Status Polling
+// ============================================================================
+
+async function fetchStatus() {
+    try {
+        const response = await fetch('/api/admin/status', {
+            credentials: 'same-origin'
+        });
+
+        if (response.status === 401) {
+            // Session expired
+            isAuthenticated = false;
+            stopPolling();
+            showLoginPanel();
+            showLoginMessage('Session expired. Please log in again.', 'error');
+            return;
+        }
+
+        if (!response.ok) {
+            console.error('Failed to fetch status:', response.status);
+            return;
+        }
+
+        gameStatus = await response.json();
+        updateUI();
+    } catch (error) {
+        console.error('Status fetch error:', error);
+    }
+}
+
+async function fetchPlayers() {
+    try {
+        const response = await fetch('/api/admin/players', {
+            credentials: 'same-origin'
+        });
+
+        if (response.status === 401) {
+            return; // Handled by fetchStatus
+        }
+
+        if (!response.ok) {
+            console.error('Failed to fetch players:', response.status);
+            return;
+        }
+
+        const data = await response.json();
+        updatePlayerTable(data.players);
+    } catch (error) {
+        console.error('Players fetch error:', error);
+    }
+}
+
+function startPolling() {
+    // Initial fetch
+    fetchStatus();
+    fetchPlayers();
+
+    // Poll every 1 second
+    pollingInterval = setInterval(() => {
+        fetchStatus();
+        fetchPlayers();
+    }, 1000);
+}
+
+function stopPolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+}
+
+// ============================================================================
+// UI Updates
+// ============================================================================
+
+function updateUI() {
+    if (!gameStatus) return;
+
+    const { round_active, round_paused, current_round, next_round_number, total_rounds, scenario, duration_seconds, remaining_seconds, game_complete } = gameStatus;
+
+    // Update status text
+    if (game_complete) {
+        statusText.textContent = 'Game Complete';
+        timerDisplay.textContent = '-';
+    } else if (round_active && round_paused) {
+        statusText.textContent = `Round ${current_round} Paused`;
+        timerDisplay.textContent = `${remaining_seconds}s`;
+    } else if (round_active) {
+        statusText.textContent = `Round ${current_round} Active`;
+        timerDisplay.textContent = `${remaining_seconds}s`;
+    } else if (next_round_number > 1) {
+        statusText.textContent = 'Between Rounds';
+        timerDisplay.textContent = '-';
+    } else {
+        statusText.textContent = 'Game Not Started';
+        timerDisplay.textContent = '-';
+    }
+
+    // Update progress
+    if (current_round) {
+        roundProgress.textContent = `Round ${current_round} of ${total_rounds}`;
+    } else {
+        roundProgress.textContent = `${total_rounds} rounds configured`;
+    }
+
+    // Update scenario display
+    if (scenario) {
+        const scenarioNames = { up: 'Up ↑', down: 'Down ↓', oscillate: 'Oscillate ~' };
+        currentScenario.textContent = scenarioNames[scenario] || scenario;
+    } else {
+        currentScenario.textContent = '-';
+    }
+
+    // Update buttons visibility
+    if (game_complete) {
+        startButton.classList.add('hidden');
+        pauseButton.classList.add('hidden');
+        resumeButton.classList.add('hidden');
+        endButton.classList.add('hidden');
+    } else if (round_active && round_paused) {
+        startButton.classList.add('hidden');
+        pauseButton.classList.add('hidden');
+        resumeButton.classList.remove('hidden');
+        endButton.classList.remove('hidden');
+    } else if (round_active) {
+        startButton.classList.add('hidden');
+        pauseButton.classList.remove('hidden');
+        resumeButton.classList.add('hidden');
+        endButton.classList.remove('hidden');
+    } else {
+        startButton.classList.remove('hidden');
+        pauseButton.classList.add('hidden');
+        resumeButton.classList.add('hidden');
+        endButton.classList.add('hidden');
+    }
+
+    // Update configuration inputs
+    if (!userEditedTotalRounds) {
+        totalRoundsInput.value = total_rounds;
+    }
+    if (!userEditedDuration) {
+        durationSecondsInput.value = duration_seconds;
+    }
+
+    // Disable configuration during active round
+    if (round_active) {
+        durationSecondsInput.disabled = true;
+        nextScenarioSelect.disabled = true;
+        totalRoundsInput.disabled = true;
+        durationHint.classList.remove('hidden');
+        scenarioHint.classList.remove('hidden');
+    } else {
+        durationSecondsInput.disabled = false;
+        nextScenarioSelect.disabled = false;
+        // Only enable total rounds before game starts
+        if (next_round_number <= 1) {
+            totalRoundsInput.disabled = false;
+        } else {
+            totalRoundsInput.disabled = true;
+        }
+        durationHint.classList.add('hidden');
+        scenarioHint.classList.add('hidden');
+    }
+}
+
+function updatePlayerTable(players) {
+    playerCount.textContent = players.length;
+
+    if (players.length === 0) {
+        playersTbody.innerHTML = `
+            <tr class="empty-row">
+                <td colspan="6">No players connected</td>
+            </tr>
+        `;
+        return;
+    }
+
+    const rows = players.map(player => {
+        const roundPnlClass = player.round_pnl >= 0 ? 'positive' : 'negative';
+        const cumulativePnlClass = player.cumulative_pnl >= 0 ? 'positive' : 'negative';
+        const roundPnlSign = player.round_pnl >= 0 ? '+' : '';
+        const cumulativePnlSign = player.cumulative_pnl >= 0 ? '+' : '';
+
+        return `
+            <tr>
+                <td>${escapeHtml(player.name)}</td>
+                <td>${player.role}</td>
+                <td>${player.position}</td>
+                <td class="${roundPnlClass}">${roundPnlSign}${player.round_pnl.toFixed(2)}</td>
+                <td class="${cumulativePnlClass}">${cumulativePnlSign}${player.cumulative_pnl.toFixed(2)}</td>
+                <td>${player.trade_count}</td>
+            </tr>
+        `;
+    }).join('');
+
+    playersTbody.innerHTML = rows;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showMessage(text, type) {
+    messageBox.textContent = text;
+    messageBox.className = type || 'info';
+
+    // Clear message after 5 seconds
+    setTimeout(() => {
+        if (messageBox.textContent === text) {
+            messageBox.textContent = '';
+            messageBox.className = 'info';
+        }
+    }, 5000);
+}
+
+// ============================================================================
+// Admin Actions
+// ============================================================================
+
+async function startRound() {
+    const totalRounds = parseInt(totalRoundsInput.value, 10);
+    const durationSeconds = parseInt(durationSecondsInput.value, 10);
+    const scenario = nextScenarioSelect.value;
+
+    // Validate inputs
+    if (isNaN(totalRounds) || totalRounds < 1) {
+        showMessage('Total rounds must be at least 1', 'error');
+        return;
+    }
+    if (isNaN(durationSeconds) || durationSeconds < 10) {
+        showMessage('Round duration must be at least 10 seconds', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/start-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                scenario,
+                duration_seconds: durationSeconds,
+                total_rounds: totalRounds
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.detail || 'Failed to start round', 'error');
+            return;
+        }
+
+        showMessage(`Round ${data.round_number} started (${data.scenario}, ${data.duration_seconds}s)`, 'success');
+        userEditedDuration = false;
+        userEditedTotalRounds = false;
+    } catch (error) {
+        showMessage('Failed to start round', 'error');
+        console.error('Start round error:', error);
+    }
+}
+
+async function pauseRound() {
+    try {
+        const response = await fetch('/api/admin/pause-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.detail || 'Failed to pause round', 'error');
+            return;
+        }
+
+        showMessage(`Round paused (${data.remaining_seconds}s remaining)`, 'success');
+    } catch (error) {
+        showMessage('Failed to pause round', 'error');
+        console.error('Pause round error:', error);
+    }
+}
+
+async function resumeRound() {
+    try {
+        const response = await fetch('/api/admin/resume-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.detail || 'Failed to resume round', 'error');
+            return;
+        }
+
+        showMessage(`Round resumed (${data.remaining_seconds}s remaining)`, 'success');
+    } catch (error) {
+        showMessage('Failed to resume round', 'error');
+        console.error('Resume round error:', error);
+    }
+}
+
+async function endRound() {
+    try {
+        const response = await fetch('/api/admin/end-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.detail || 'Failed to end round', 'error');
+            return;
+        }
+
+        showMessage(`Round ${data.round_number} ended (close price: ${data.close_price.toFixed(2)})`, 'success');
+    } catch (error) {
+        showMessage('Failed to end round', 'error');
+        console.error('End round error:', error);
+    }
+}
+
+async function restartGame() {
+    const confirmed = confirm('Are you sure you want to restart the game? This will remove all players and reset scores.');
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/admin/restart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.detail || 'Failed to restart game', 'error');
+            return;
+        }
+
+        showMessage('Game restarted successfully', 'success');
+        userEditedDuration = false;
+        userEditedTotalRounds = false;
+    } catch (error) {
+        showMessage('Failed to restart game', 'error');
+        console.error('Restart game error:', error);
+    }
+}
+
+// ============================================================================
+// Event Listeners
+// ============================================================================
+
+// Login
+loginButton.addEventListener('click', login);
+adminPinInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') login();
+});
+logoutButton.addEventListener('click', logout);
+
+// Control buttons
+startButton.addEventListener('click', startRound);
+pauseButton.addEventListener('click', pauseRound);
+resumeButton.addEventListener('click', resumeRound);
+endButton.addEventListener('click', endRound);
+restartButton.addEventListener('click', restartGame);
+
+// Track user edits on inputs
+durationSecondsInput.addEventListener('input', () => {
+    userEditedDuration = true;
+});
+
+totalRoundsInput.addEventListener('input', () => {
+    userEditedTotalRounds = true;
+});
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+function init() {
+    console.log('Admin panel initializing...');
+    console.log('Login button:', loginButton);
+    console.log('PIN input:', adminPinInput);
+
+    // Check if already authenticated (session cookie may exist)
+    fetchStatus();
+}
+
+// Start when DOM is fully loaded
+document.addEventListener('DOMContentLoaded', init);
+
+// Also try immediate init in case DOM is already loaded
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    init();
+}

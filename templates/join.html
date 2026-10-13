@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Energy Trading Game - Join</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <div class="landscape-overlay">
+        <div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12" y2="18"/>
+            </svg>
+            <p>Please rotate to portrait for the best experience.</p>
+        </div>
+    </div>
+    <main class="page">
+        <section class="card">
+            <h1>Energy Trading Game</h1>
+            <p>Enter your name to join as Generator, Retailer, or Trader.</p>
+            <form id="join-form">
+                <label for="name">Name</label>
+                <input id="name" name="name" type="text" maxlength="24" autocomplete="off" placeholder="Your name" required />
+                <button type="submit">Join Game</button>
+            </form>
+            <div id="error" class="error"></div>
+            <div class="help"><strong>Role assignment:</strong> Generator, Retailer, Trader, then repeat.</div>
+        </section>
+    </main>
+    <script src="/static/join.js"></script>
+</body>
+</html>

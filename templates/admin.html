@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Energy Trading Game - Admin</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <div class="landscape-overlay">
+        <div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                <line x1="12" y1="18" x2="12" y2="18"/>
+            </svg>
+            <p>Please rotate to portrait for the best experience.</p>
+        </div>
+    </div>
+    <main class="page">
+        <!-- Login Form (shown when not authenticated) -->
+        <section id="login-section" class="card">
+            <h1>Admin Login</h1>
+            <p>Enter admin PIN to access the game control panel.</p>
+
+            <div class="form-group">
+                <label for="admin-pin">Admin PIN</label>
+                <input type="password" id="admin-pin" placeholder="Enter PIN" />
+            </div>
+
+            <button id="login-button" class="primary">Login</button>
+
+            <div id="login-message" class="info"></div>
+            <p class="help">Default PIN is 1234. Set ADMIN_PIN environment variable to customize.</p>
+        </section>
+
+        <!-- Admin Panel (shown when authenticated) -->
+        <section id="admin-panel" class="card hidden">
+            <div class="admin-header">
+                <h1>Admin Control</h1>
+                <button id="logout-button" class="secondary">Logout</button>
+            </div>
+
+            <!-- Status Bar -->
+            <div id="game-status" class="status-panel">
+                <div class="status-row">
+                    <span><strong>Status:</strong> <span id="status-text">Loading...</span></span>
+                    <span><strong>Timer:</strong> <span id="timer-display">-</span></span>
+                </div>
+                <div class="status-row">
+                    <span><strong>Progress:</strong> <span id="round-progress">-</span></span>
+                    <span><strong>Scenario:</strong> <span id="current-scenario">-</span></span>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div id="control-buttons" class="button-row">
+                <button id="start-round" class="primary">Start Round</button>
+                <button id="pause-round" class="warning hidden">Pause Round</button>
+                <button id="resume-round" class="primary hidden">Resume Round</button>
+                <button id="end-round" class="danger hidden">End Round</button>
+                <button id="restart-game" class="danger">Restart Game</button>
+            </div>
+
+            <div id="admin-message" class="info"></div>
+
+            <!-- Configuration Panel -->
+            <div id="config-panel" class="config-section">
+                <h3>Round Configuration</h3>
+
+                <div class="form-group">
+                    <label for="total-rounds">Total Rounds</label>
+                    <input type="number" id="total-rounds" min="1" value="5" />
+                </div>
+
+                <div class="form-group">
+                    <label for="price-mode">Game Mode</label>
+                    <select id="price-mode">
+                        <option value="hard" selected>Hard – volatile random walk</option>
+                        <option value="easy">Easy – smooth sine waves</option>
+                    </select>
+                    <span id="price-mode-hint" class="hint hidden">Can only be changed before the first round</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="duration-seconds">Round Duration (seconds)</label>
+                    <input type="number" id="duration-seconds" min="10" value="90" />
+                    <span id="duration-hint" class="hint hidden">Cannot change while round is active</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="next-scenario">First-Half Scenario</label>
+                    <select id="next-scenario">
+                        <option value="up" selected>Up ↑</option>
+                        <option value="down">Down ↓</option>
+                        <option value="oscillate">Oscillate ~</option>
+                    </select>
+                    <span id="scenario-hint" class="hint hidden">Cannot change while round is active</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="next-scenario-2">Second-Half Scenario</label>
+                    <select id="next-scenario-2">
+                        <option value="up">Up ↑</option>
+                        <option value="down" selected>Down ↓</option>
+                        <option value="oscillate">Oscillate ~</option>
+                    </select>
+                    <span class="hint hidden scenario-hint-secondary">Cannot change while round is active</span>
+                </div>
+            </div>
+
+            <!-- Live Player Overview -->
+            <div id="player-overview" class="overview-section">
+                <h3>Live Player Overview</h3>
+                <div class="player-count">Players: <span id="player-count">0</span></div>
+
+                <div class="table-container">
+                    <table id="players-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Position (MWh)</th>
+                                <th>Round P&L</th>
+                                <th>Cumulative P&L</th>
+                                <th>Trades</th>
+                            </tr>
+                        </thead>
+                        <tbody id="players-tbody">
+                            <tr class="empty-row">
+                                <td colspan="6">No players connected</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="/static/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Energy Trading Game</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="white-theme">
+    
+    <main class="page">
+        <section class="card game-card">
+            <button id="theme-toggle" class="theme-toggle">Toggle Black/White Theme</button>
+            <header>
+                <div>
+                    <h1>Energy Trading Game</h1>
+                    <p id="role-label">Role: <span id="player-role">-</span></p>
+                </div>
+                <div class="stats-block">
+                    <div><strong>Position:</strong> <span id="position">0</span> MWh</div>
+                    <div><strong>Cash:</strong> <span id="current-cash">0.00</span> EUR</div>
+                    <div><strong>Expected Cash:</strong> <span id="expected-cash">0.00</span> EUR</div>
+                    <div id="unit-economics" class="hidden"><strong id="unit-label">-</strong> <span id="unit-value">-</span> EUR/MWh</div>
+                    <div><strong>Round P&L:</strong> <span id="round-pnl">0.00</span> EUR</div>
+                    <div><strong>Cumulative P&L:</strong> <span id="cumulative-pnl">0.00</span> EUR</div>
+                    <div><strong>Break-even:</strong> <span id="break-even">-</span></div>
+                    <div><strong>Status:</strong> <span id="status-indicator">-</span></div>
+                </div>
+            </header>
+            <section class="market-panel">
+                <div class="market-box market-signals-panel">
+                    <div class="market-signals-header">
+                        <strong>Market Signals</strong>
+                        <span id="news-round-label" class="round-label">Round -</span>
+                    </div>
+                    <div id="market-signals-content">
+                        <div id="news-headline" class="news-headline">Waiting for the next round...</div>
+                        <div id="news-body" class="news-body"></div>
+                        <div id="forecast-cards" class="forecast-cards"></div>
+                    </div>
+                </div>
+                <div class="market-box">
+                    <div class="price-row"><span>Bid</span><span id="bid-price">-</span></div>
+                    <div class="price-row"><span>Offer</span><span id="offer-price">-</span></div>
+                    <div class="price-row"><span>Last Traded</span><span id="last-price">-</span></div>
+                    <div class="price-row"><span>Timer</span><span id="timer">-</span></div>
+                </div>
+            </section>
+            <section class="trade-panel">
+                <button id="buy-button" class="trade-button buy" disabled>Buy 1 MWh at offer</button>
+                <button id="sell-button" class="trade-button sell" disabled>Sell 1 MWh at bid</button>
+            </section>
+            <section id="trade-history-panel" class="trade-history-panel">
+                <h3>Trade History</h3>
+                <div id="trade-history-list" class="trade-history-list">
+                    <p class="empty-message">No trades yet this round.</p>
+                </div>
+            </section>
+            <section class="chart-panel">
+                <div class="chart-scroll-wrapper">
+                    <canvas id="price-chart" width="720" height="180"></canvas>
+                </div>
+                <div class="chart-scroll-wrapper">
+                    <canvas id="candle-chart" width="720" height="180"></canvas>
+                </div>
+            </section>
+            <section id="result-panel" class="result-panel hidden">
+                <h2>Round Summary</h2>
+                <div id="summary-text"></div>
+                <div id="player-summary"></div>
+                <div id="leaderboard"></div>
+            </section>
+            <div id="message" class="info"></div>
+        </section>
+    </main>
+    <script src="/static/game.js"></script>
+</body>
+</html>
