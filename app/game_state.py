@@ -47,6 +47,7 @@ class Player:
     settlement_pnl: float = 0.0  # Open position settled at the clearing price after the final round
     lots: List[list] = field(default_factory=list)  # FIFO [reference_price, mwh] of Generator inventory / Retailer obligations
     connected: bool = True
+    briefing_ready: bool = False  # Ticked "Elolvastam" on the briefing page
     round_start_price: float = 0.0  # Store for role economics calculations
     round_opening_position: int = 0  # Position carried in before this round's allocation
     finalized_this_round: bool = False  # Prevent double-counting P&L
@@ -184,6 +185,7 @@ class GameState:
         self.admin_overrides: Dict[int, str] = {}  # round_number -> admin-overridden scenario
         self.game_generation: int = 0  # Increments on each game restart to invalidate old tasks
         self.price_mode: str = "hard"  # "hard" = random walk, "easy" = sine path
+        self.briefing_released: bool = False  # Admin moved players from the briefing to the game lobby
 
     def reset(self) -> None:
         """
@@ -209,6 +211,7 @@ class GameState:
         self.scenario_schedule.clear()
         self.admin_overrides.clear()
         self.price_mode = "hard"
+        self.briefing_released = False
 
         # Increment game generation to invalidate old round tasks
         self.game_generation += 1

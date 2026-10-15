@@ -25,7 +25,7 @@ form.addEventListener('submit', async (event) => {
         localStorage.setItem('player_role', payload.role);
         localStorage.setItem('player_name', name);
         localStorage.setItem('player_id', payload.player_id);
-        window.location.href = '/game';
+        window.location.href = '/intro';
     } catch (error) {
         errorBox.textContent = error.message || 'Join failed.';
     }

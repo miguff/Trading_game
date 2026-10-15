@@ -38,6 +38,10 @@
     let playerCount = null;
     let playersTbody = null;
 
+    let releaseBriefingButton = null;
+    let briefingReadyCount = null;
+    let briefingTotalCount = null;
+    let briefingHint = null;
     // State
     let isAuthenticated = false;
     let gameStatus = null;
@@ -82,6 +86,11 @@
 
         playerCount = document.getElementById('player-count');
         playersTbody = document.getElementById('players-tbody');
+
+        releaseBriefingButton = document.getElementById('release-briefing');
+        briefingReadyCount = document.getElementById('briefing-ready-count');
+        briefingTotalCount = document.getElementById('briefing-total-count');
+        briefingHint = document.getElementById('briefing-hint');
 
         // Log what we found
         console.log('[Admin] loginButton:', loginButton);
@@ -141,6 +150,10 @@
 
         if (restartButton) {
             restartButton.addEventListener('click', restartGame);
+        }
+
+        if (releaseBriefingButton) {
+            releaseBriefingButton.addEventListener('click', releaseBriefing);
         }
 
         if (durationSecondsInput) {
@@ -397,6 +410,8 @@
         }
 
         // Update buttons visibility
+        updateBriefingPanel();
+
         if (!startButton || !pauseButton || !resumeButton || !endButton) {
             return; // Elements not found
         }
@@ -471,7 +486,7 @@
         if (players.length === 0) {
             playersTbody.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="6">No players connected</td>
+                    <td colspan="7">No players connected</td>
                 </tr>
             `;
             return;
@@ -487,6 +502,7 @@
                 <tr>
                     <td>${escapeHtml(player.name)}</td>
                     <td>${player.role}</td>
+                    <td>${player.briefing_ready ? '✓' : '–'}</td>
                     <td>${player.position}</td>
                     <td class="${roundPnlClass}">${roundPnlSign}${player.round_pnl.toFixed(2)}</td>
                     <td class="${cumulativePnlClass}">${cumulativePnlSign}${player.cumulative_pnl.toFixed(2)}</td>
@@ -496,6 +512,28 @@
         }).join('');
 
         playersTbody.innerHTML = rows;
+    }
+
+    function updateBriefingPanel() {
+        const { briefing_released, players_ready, players_total } = gameStatus;
+        const allReady = players_total > 0 && players_ready === players_total;
+
+        if (briefingReadyCount) briefingReadyCount.textContent = players_ready;
+        if (briefingTotalCount) briefingTotalCount.textContent = players_total;
+
+        if (releaseBriefingButton) {
+            releaseBriefingButton.disabled = briefing_released || !allReady;
+            releaseBriefingButton.classList.toggle('hidden', briefing_released);
+        }
+        if (briefingHint) {
+            briefingHint.textContent = briefing_released
+                ? 'Briefing released. Players are in the game lobby; you can start the game.'
+                : (allReady ? 'Everyone has confirmed.' : 'Waiting for all players to tick the checkbox.');
+        }
+        if (startButton) {
+            startButton.disabled = !briefing_released;
+            startButton.title = briefing_released ? '' : 'Release the briefing first';
+        }
     }
 
     function escapeHtml(text) {
@@ -521,6 +559,29 @@
     // ============================================================================
     // Admin Actions
     // ============================================================================
+
+    async function releaseBriefing() {
+        try {
+            const response = await fetch('/api/admin/release-briefing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin'
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMessage(data.detail || 'Failed to release briefing', 'error');
+                return;
+            }
+
+            showMessage('Players moved to the game lobby. You can start the game.', 'success');
+            fetchStatus();
+        } catch (error) {
+            showMessage('Failed to release briefing', 'error');
+            console.error('[Admin] Release briefing error:', error);
+        }
+    }
 
     async function startRound() {
         const totalRounds = totalRoundsInput ? parseInt(totalRoundsInput.value, 10) : 5;

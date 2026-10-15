@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Energiakereskedelmi játék – Játékleírás</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body class="white-theme">
+    <main class="page">
+        <section class="card intro-card">
+            <h1>Üdvözlünk az Energiakereskedelmi játékban!</h1>
+            <p class="intro-role">A te szereped: <strong id="intro-role-name">-</strong></p>
+
+            <div class="intro-section">
+                <h2>A játék célja</h2>
+                <p>
+                    Az áramtőzsde szereplőinek bőrébe bújtok. A feladat az, hogy a rendelkezésre álló
+                    hírek és piaci jelek alapján jól időzítsd a vételeidet és eladásaidat, és a játék
+                    végére a lehető legmagasabb összesített eredményt (kumulált P&amp;L) érd el.
+                </p>
+            </div>
+
+            <div class="intro-section">
+                <h2>Szerepkörök</h2>
+                <p>A belépés sorrendjében kaptok szerepet: Termelő, Kiskereskedő, Kereskedő, majd újra elölről.</p>
+                <ul class="intro-roles">
+                    <li data-role="Generator">
+                        <strong>Termelő (Generator):</strong> kezdetben <strong>+10 MWh</strong> energiát birtokol.
+                        Termelési költsége a kör kezdőárának <strong>95%-a</strong>. Akkor keres, ha a költségénél
+                        drágábban tud eladni; ha olcsón vásárol vissza, azzal is nyerhet.
+                    </li>
+                    <li data-role="Retailer">
+                        <strong>Kiskereskedő (Retailer):</strong> kezdetben <strong>−10 MWh</strong> kötelezettsége van
+                        (az ügyfeleit kell ellátnia). Ügyfélárazása (tarifa) a kör kezdőárának <strong>105%-a</strong>.
+                        Akkor keres, ha a tarifájánál olcsóbban tud beszerezni energiát.
+                    </li>
+                    <li data-role="Trader">
+                        <strong>Kereskedő (Trader):</strong> <strong>0 MWh</strong>-val indul, nincs termelése és
+                        ügyfélköre. Tiszta kereskedés: olcsón vesz, drágán ad el (vagy fordítva).
+                    </li>
+                </ul>
+            </div>
+
+            <div class="intro-section">
+                <h2>Hogyan zajlik egy kör?</h2>
+                <ul>
+                    <li>A játék több, időzített körből áll. A játékvezető indítja el a köröket, a visszaszámláló a képernyőn látható.</li>
+                    <li>Minden kereskedés <strong>1 MWh</strong>. Vásárolni a kínálati (<em>Offer</em>), eladni a vételi (<em>Bid</em>) áron lehet.</li>
+                    <li>Mindenkinek van pozíciókorlátja (szerepkörönként más), ezt nem lehet túllépni.</li>
+                    <li>A <strong>Market Signals</strong> panelen hírek és előrejelzések jelennek meg, ezek segítenek megsaccolni, merre mozdul az ár.</li>
+                    <li>Az árfolyamot a gyertya- és vonaldiagram mutatja.</li>
+                    <li>A kör végén a nyitott pozíciód átkerül a következő körbe.</li>
+                </ul>
+            </div>
+
+            <div class="intro-section">
+                <h2>Az eredmény</h2>
+                <ul>
+                    <li>A <strong>Round P&amp;L</strong> az adott kör eredménye: a Termelőnél a termelési költséghez, a Kiskereskedőnél a tarifához, a Kereskedőnél a pénzmozgásokhoz képest számolódik.</li>
+                    <li>A <strong>Cumulative P&amp;L</strong> a körök eredményeinek összege.</li>
+                    <li>Az utolsó kör végén a nyitott pozíciók a záróáron elszámolásra kerülnek.</li>
+                    <li>A játék végén ranglista készül, és látod, hogy jobban teljesítettél-e, mintha semmit sem csináltál volna.</li>
+                </ul>
+            </div>
+
+            <div class="intro-confirm">
+                <label class="intro-checkbox">
+                    <input type="checkbox" id="read-checkbox" />
+                    <span>Elolvastam, kezdődhet a játék</span>
+                </label>
+                <div id="intro-status" class="info"></div>
+            </div>
+        </section>
+    </main>
+    <script src="/static/intro.js"></script>
+</body>
+</html>

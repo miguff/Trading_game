@@ -5,6 +5,15 @@ const playerId = localStorage.getItem('player_id');
 
 if (!sessionToken) {
     window.location.href = '/';
+} else {
+    fetch(`/briefing-status?session_token=${encodeURIComponent(sessionToken)}`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+            if (data && !data.briefing_released) {
+                window.location.href = '/intro';
+            }
+        })
+        .catch(() => {});
 }
 
 const roleLabel = document.getElementById('player-role');
@@ -82,6 +91,20 @@ function toggleTheme() {
 }
 
 themeToggle.addEventListener('click', toggleTheme);
+
+const widthToggle = document.getElementById('width-toggle');
+
+function applyWideView(isWide) {
+    document.body.classList.toggle('wide-view', isWide);
+    widthToggle.textContent = isWide ? 'Compact view' : 'Wide view';
+}
+
+applyWideView(localStorage.getItem('wide_view') === '1');
+widthToggle.addEventListener('click', () => {
+    const isWide = !document.body.classList.contains('wide-view');
+    localStorage.setItem('wide_view', isWide ? '1' : '0');
+    applyWideView(isWide);
+});
 
 function getThemeColors() {
     const isBlack = document.body.classList.contains('black-theme');

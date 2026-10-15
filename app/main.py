@@ -51,6 +51,15 @@ def join_page(request: Request):
     )
 
 
+@app.get("/intro")
+def intro_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "intro.html",
+        {"request": request},
+    )
+
+
 @app.get("/game")
 def game_page(request: Request):
     return templates.TemplateResponse(
@@ -146,6 +155,30 @@ async def join(request: Request):
     }
 
 
+@app.get("/briefing-status")
+def briefing_status(session_token: str = ""):
+    """Briefing state for a player: whether they ticked the checkbox and whether the admin released the lobby."""
+    player = game_state.get_player_by_token(session_token)
+    if player is None:
+        raise HTTPException(status_code=404, detail="Player session not found")
+    return {
+        "ready": player.briefing_ready,
+        "briefing_released": game_state.briefing_released,
+        "role": player.role,
+    }
+
+
+@app.post("/briefing/ready")
+async def briefing_ready(request: Request):
+    data = await request.json()
+    player = game_state.get_player_by_token(data.get("session_token", ""))
+    if player is None:
+        raise HTTPException(status_code=404, detail="Player session not found")
+
+    player.briefing_ready = bool(data.get("ready", True))
+    return {"ready": player.briefing_ready, "briefing_released": game_state.briefing_released}
+
+
 @app.post("/admin/start-round")
 async def start_round(request: Request):
     data = await request.json()
@@ -165,6 +198,9 @@ async def start_round(request: Request):
             status_code=400,
             detail="A round is already active",
         )
+
+    if not game_state.briefing_released:
+        raise HTTPException(status_code=400, detail="The briefing has not been released yet")
 
     try:
         await round_manager.start_round(
@@ -326,6 +362,9 @@ async def admin_status(request: Request, admin_token: str = Depends(require_admi
         "remaining_seconds": remaining,
         "price_mode": game_state.price_mode,
         "game_complete": game_state.next_round_number > game_state.total_rounds and not round_state.is_active,
+        "briefing_released": game_state.briefing_released,
+        "players_ready": sum(1 for p in game_state.players.values() if p.briefing_ready),
+        "players_total": len(game_state.players),
     }
 
 
@@ -347,12 +386,31 @@ async def admin_players(request: Request, admin_token: str = Depends(require_adm
             "cumulative_pnl": round(player.cumulative_pnl, 2),
             "connected": player.connected,
             "trade_count": trade_count,
+            "briefing_ready": player.briefing_ready,
         })
 
     return {
         "players": players_data,
         "count": len(players_data)
     }
+
+
+@app.post("/api/admin/release-briefing")
+async def api_release_briefing(request: Request, admin_token: str = Depends(require_admin)):
+    """Move all players from the briefing page to the game lobby once everyone has confirmed reading it."""
+    if not game_state.players:
+        raise HTTPException(status_code=400, detail="No players have joined yet")
+
+    waiting = [p.name for p in game_state.players.values() if not p.briefing_ready]
+    if waiting:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Not everyone has confirmed yet: {', '.join(waiting)}",
+        )
+
+    game_state.briefing_released = True
+    await ws_manager.broadcast("briefing_released", {})
+    return {"status": "released"}
 
 
 @app.post("/api/admin/start-round")
@@ -407,6 +465,12 @@ async def api_start_round(request: Request, admin_token: str = Depends(require_a
         raise HTTPException(
             status_code=400,
             detail="A round is already active"
+        )
+
+    if not game_state.briefing_released:
+        raise HTTPException(
+            status_code=400,
+            detail="Release the briefing before starting the game"
         )
 
     try:

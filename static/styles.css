@@ -416,6 +416,20 @@ table th {
     background: var(--border-color);
 }
 
+.toggle-bar {
+    display: flex;
+    gap: 8px;
+}
+
+.toggle-bar .theme-toggle {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+#width-toggle {
+    display: none;
+}
+
 /* ---- Scenario panel (admin) ---- */
 .scenario-panel {
     margin-top: 14px;
@@ -684,15 +698,39 @@ table th {
         padding: 18px;
     }
 
-    .theme-toggle {
+    .toggle-bar {
         position: absolute;
         top: 12px;
         right: 12px;
+    }
+
+    .toggle-bar .theme-toggle {
+        flex: none;
         width: auto;
         padding: 8px 16px;
         font-size: 0.85rem;
-        margin-bottom: 0;
         border-radius: 8px;
+    }
+
+    #width-toggle {
+        display: block;
+    }
+
+    /* Wide view: use the full browser width, charts side by side */
+    body.wide-view .game-card {
+        max-width: 1800px;
+    }
+
+    body.wide-view .stats-block {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    body.wide-view .chart-panel {
+        flex-direction: row;
+    }
+
+    body.wide-view .chart-scroll-wrapper {
+        flex: 1 1 0;
     }
 
     .scenario-item {
@@ -1240,4 +1278,64 @@ body.black-theme #admin-message.info {
     background: #0c4a6e;
     color: #7dd3fc;
     border-color: #075985;
+}
+
+/* ---- Briefing (intro) page ---- */
+.intro-card {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.intro-role {
+    margin-top: 0;
+}
+
+.intro-section {
+    margin-top: 18px;
+}
+
+.intro-section h2 {
+    font-size: 1.1rem;
+    margin: 0 0 8px;
+}
+
+.intro-section ul {
+    padding-left: 20px;
+    margin: 8px 0 0;
+}
+
+.intro-section li {
+    margin-bottom: 6px;
+    line-height: 1.45;
+}
+
+.intro-roles li {
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+
+.intro-roles li.highlight {
+    background: var(--bg-panel);
+    outline: 2px solid var(--border-color);
+}
+
+.intro-confirm {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.intro-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.intro-checkbox input {
+    width: 24px;
+    height: 24px;
+    flex: none;
 }

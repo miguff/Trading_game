@@ -63,6 +63,14 @@
 
             <div id="admin-message" class="info"></div>
 
+            <!-- Briefing Gate -->
+            <div id="briefing-panel" class="config-section">
+                <h3>Player Briefing</h3>
+                <p>Players confirmed reading the briefing: <strong><span id="briefing-ready-count">0</span> / <span id="briefing-total-count">0</span></strong></p>
+                <button id="release-briefing" class="primary" disabled>Everyone read it – continue to game lobby</button>
+                <p id="briefing-hint" class="hint">Waiting for all players to tick the checkbox.</p>
+            </div>
+
             <!-- Configuration Panel -->
             <div id="config-panel" class="config-section">
                 <h3>Round Configuration</h3>
@@ -119,6 +127,7 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Role</th>
+                                <th>Briefing read</th>
                                 <th>Position (MWh)</th>
                                 <th>Round P&L</th>
                                 <th>Cumulative P&L</th>
@@ -127,7 +136,7 @@
                         </thead>
                         <tbody id="players-tbody">
                             <tr class="empty-row">
-                                <td colspan="6">No players connected</td>
+                                <td colspan="7">No players connected</td>
                             </tr>
                         </tbody>
                     </table>
