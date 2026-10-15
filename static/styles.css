@@ -355,16 +355,14 @@ button.danger:hover {
 }
 
 .chart-scroll-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
     width: 100%;
+    min-width: 0;
 }
 
 .chart-panel canvas {
     display: block;
-    width: 720px;
+    width: 100%;
     height: auto;
-    min-height: 140px;
     border-radius: 8px;
 }
 
@@ -684,12 +682,6 @@ table th {
 
     .chart-panel {
         padding: 18px;
-    }
-
-    .chart-panel canvas {
-        max-width: 720px;
-        margin: 0 auto;
-        min-height: 180px;
     }
 
     .theme-toggle {
