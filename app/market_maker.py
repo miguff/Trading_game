@@ -34,6 +34,13 @@ class MarketMaker:
     SINE_OSCILLATION_AMPLITUDE = 0.04  # Easy mode: peak deviation of one oscillation cycle per phase
     SINE_RIPPLE_AMPLITUDE = 0.015  # Easy mode: short-cycle volatility laid over every phase
     SINE_RIPPLE_CYCLES = 3  # Easy mode: ripple cycles per scenario phase
+    # Extreme scenarios: surge (violent rise) and crash (violent fall)
+    EXTREME_SCENARIOS = ("surge", "crash")
+    TREND_DIRECTION = {"up": 1, "surge": 1, "down": -1, "crash": -1}
+    EXTREME_TREND_PROBABILITY = 0.85
+    EXTREME_VOLATILITY = 0.006
+    EXTREME_MIN_PHASE_MOVE = 0.10  # A surge/crash phase closes at least 10% away from its opening price
+    SINE_EXTREME_AMPLITUDE = 0.25  # Easy mode: total surge/crash move per scenario phase
 
     def __init__(self, spread: float = 2.0) -> None:
         self.spread = spread
@@ -67,22 +74,24 @@ class MarketMaker:
             New mid-price for this tick
         """
         previous_mid = max(previous_mid, 1.0)
-        if scenario == "up":
-            up_probability = self.TREND_UP_PROBABILITY
-        elif scenario == "down":
-            up_probability = 1.0 - self.TREND_UP_PROBABILITY
-        else:
+        direction = self.TREND_DIRECTION.get(scenario)
+        extreme = scenario in self.EXTREME_SCENARIOS
+        if direction is None:
             up_probability = 0.5
-        volatility = (
-            self.OSCILLATION_VOLATILITY
-            if scenario == "oscillate"
-            else self.RANDOM_WALK_VOLATILITY
-        )
+            volatility = (
+                self.OSCILLATION_VOLATILITY
+                if scenario == "oscillate"
+                else self.RANDOM_WALK_VOLATILITY
+            )
+        else:
+            trend_probability = self.EXTREME_TREND_PROBABILITY if extreme else self.TREND_UP_PROBABILITY
+            up_probability = trend_probability if direction > 0 else 1.0 - trend_probability
+            volatility = self.EXTREME_VOLATILITY if extreme else self.RANDOM_WALK_VOLATILITY
 
         step_goes_up = random.random() < up_probability
         step = abs(random.gauss(0.0, volatility))
-        if scenario != "oscillate":
-            with_trend = step_goes_up == (scenario == "up")
+        if direction is not None:
+            with_trend = step_goes_up == (direction > 0)
             step *= self.TREND_STEP_MULTIPLIER if with_trend else self.COUNTER_STEP_MULTIPLIER
         log_return = step if step_goes_up else -step
         next_mid = previous_mid * math.exp(log_return)
@@ -115,10 +124,12 @@ class MarketMaker:
         close on the right side of their opening price.
         """
         phase_progress = max(0.0, min(1.0, phase_progress))
-        if scenario == "up":
-            factor = 1 + self.SINE_TREND_AMPLITUDE * math.sin(phase_progress * math.pi / 2)
-        elif scenario == "down":
-            factor = 1 - self.SINE_TREND_AMPLITUDE * math.sin(phase_progress * math.pi / 2)
+        direction = self.TREND_DIRECTION.get(scenario)
+        if direction is not None:
+            amplitude = (
+                self.SINE_EXTREME_AMPLITUDE if scenario in self.EXTREME_SCENARIOS else self.SINE_TREND_AMPLITUDE
+            )
+            factor = 1 + direction * amplitude * math.sin(phase_progress * math.pi / 2)
         else:
             factor = 1 + self.SINE_OSCILLATION_AMPLITUDE * math.sin(phase_progress * 2 * math.pi)
         factor += (
@@ -140,10 +151,17 @@ class MarketMaker:
         scenario: str,
         scenario_start_price: float,
     ) -> float:
-        if scenario == "up":
-            price = max(price, scenario_start_price + 0.01)
-        elif scenario == "down":
-            price = min(price, scenario_start_price - 0.01)
+        direction = self.TREND_DIRECTION.get(scenario)
+        if direction is not None:
+            min_move = (
+                scenario_start_price * self.EXTREME_MIN_PHASE_MOVE
+                if scenario in self.EXTREME_SCENARIOS
+                else 0.01
+            )
+            if direction > 0:
+                price = max(price, scenario_start_price + min_move)
+            else:
+                price = min(price, scenario_start_price - min_move)
 
         lower_bound = max(1.0, game_start_price * (1 - self.MAX_DEVIATION_PERCENT))
         upper_bound = game_start_price * (1 + self.MAX_DEVIATION_PERCENT)

@@ -261,12 +261,71 @@ DOWN_SIGNALS = _signals("down", [
 ])
 
 
+SURGE_SIGNALS = _signals("surge", [
+    (
+        "Emergency: Major LNG Terminal Outage Sends Gas Prices Soaring",
+        "A major LNG import terminal went offline unexpectedly while storage is already low. "
+        "Traders are scrambling to cover, and day-ahead prices are rising at record speed.",
+        "",
+    ),
+    (
+        "Polar Vortex and Reactor Trips Trigger Price Spike",
+        "An unprecedented cold snap is driving heating demand to multi-year highs while several "
+        "nuclear units tripped offline. Spot power and gas prices are spiking.",
+        "",
+    ),
+    (
+        "Pipeline Rupture Cuts Supply – Panic Buying in the Gas Market",
+        "A major pipeline rupture removed a large share of pipeline flows into the region. "
+        "Market participants report panic buying and a sharp jump in the risk premium.",
+        "",
+    ),
+    (
+        "Blackout Fears: Supply Margins at Critical Levels",
+        "Grid operators warn that supply margins are at critical levels after simultaneous "
+        "plant outages and a continent-wide heatwave. Prices are surging across the curve.",
+        "",
+    ),
+])
+
+CRASH_SIGNALS = _signals("crash", [
+    (
+        "Sudden Peace Deal Triggers Massive Sell-Off in Gas",
+        "A surprise comprehensive peace agreement removed the geopolitical risk premium "
+        "overnight. Traders are dumping positions and prices are collapsing.",
+        "",
+    ),
+    (
+        "Storage Overflowing: LNG Glut Crushes Prices",
+        "A wave of unsold LNG cargoes arrived just as storage sites approach full capacity. "
+        "Sellers are cutting offers aggressively to find buyers.",
+        "",
+    ),
+    (
+        "Record Wind and Solar Output Floods the Market",
+        "Exceptional wind and solar generation combined with mild weather and weak demand is "
+        "pushing wholesale power prices down sharply.",
+        "",
+    ),
+    (
+        "Demand Collapse: Industrial Shutdowns Hit Consumption",
+        "A sudden drop in industrial demand and a warm spell left the market heavily oversupplied. "
+        "Prices are in free fall as long positions are liquidated.",
+        "",
+    ),
+])
+
+
 def get_market_signal(scenario: str, seed: Optional[int] = None) -> MarketSignal:
     """Return one round-specific news item and three rotating weather items."""
     if scenario == "up":
         signals = UP_SIGNALS
     elif scenario == "down":
         signals = DOWN_SIGNALS
+    elif scenario == "surge":
+        signals = SURGE_SIGNALS
+    elif scenario == "crash":
+        signals = CRASH_SIGNALS
     else:
         signals = UP_SIGNALS + DOWN_SIGNALS
 

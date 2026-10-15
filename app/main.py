@@ -365,6 +365,7 @@ async def admin_status(request: Request, admin_token: str = Depends(require_admi
         "briefing_released": game_state.briefing_released,
         "players_ready": sum(1 for p in game_state.players.values() if p.briefing_ready),
         "players_total": len(game_state.players),
+        "shock_active": round_state.shock_scenario is not None,
     }
 
 
@@ -491,6 +492,16 @@ async def api_start_round(request: Request, admin_token: str = Depends(require_a
             "price_mode": game_state.price_mode,
         }
 
+    except (ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/admin/trigger-shock")
+async def api_trigger_shock(request: Request, admin_token: str = Depends(require_admin)):
+    """Trigger an extreme positive or negative price shock in the active round."""
+    data = await request.json()
+    try:
+        return await round_manager.trigger_shock(data.get("direction"))
     except (ValueError, RuntimeError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 

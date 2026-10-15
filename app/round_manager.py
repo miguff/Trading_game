@@ -10,6 +10,7 @@ from app.market_signals import get_market_signal, market_signal_to_dict
 class RoundManager:
     SCENARIOS = ["up", "down", "oscillate"]
     PRICE_MODES = ("hard", "easy")
+    SHOCK_DURATION_SECONDS = 20
 
     def __init__(self, game_state: GameState, broadcaster: Callable[[str, dict], None]) -> None:
         self.game_state = game_state
@@ -354,31 +355,29 @@ class RoundManager:
             else 0.0
         )
         active_scenario, _ = self._phase_for_progress(round_state, progress)
-        close_price = self.market_maker.enforce_scenario_phase_close(
-            round_state.current_mid_price,
-            self.game_state.game_start_price,
-            active_scenario,
-            round_state.scenario_phase_start_price,
-        )
-        if round_state.scenario == "up" and round_state.scenario2 == "up":
+        close_price = round_state.current_mid_price
+        # After a shock the scenario's close rules would snap the price back, so skip them
+        if not round_state.shock_applied:
             close_price = self.market_maker.enforce_scenario_phase_close(
                 close_price,
                 self.game_state.game_start_price,
-                "up",
-                round_state.start_price,
+                active_scenario,
+                round_state.scenario_phase_start_price,
             )
-        elif round_state.scenario == "down" and round_state.scenario2 == "down":
-            close_price = self.market_maker.enforce_scenario_phase_close(
-                close_price,
-                self.game_state.game_start_price,
-                "down",
-                round_state.start_price,
-            )
+            if round_state.scenario == round_state.scenario2 and round_state.scenario in self.market_maker.TREND_DIRECTION:
+                close_price = self.market_maker.enforce_scenario_phase_close(
+                    close_price,
+                    self.game_state.game_start_price,
+                    round_state.scenario,
+                    round_state.start_price,
+                )
         if close_price != round_state.current_mid_price:
             self._set_price(close_price)
             await self._broadcast_price_update()
 
         round_state.is_active = False
+        round_state.shock_scenario = None
+        round_state.shock_ticks_remaining = 0
 
         # Store the ending mid-price for the next round's start price
         self.game_state.previous_round_end_price = close_price
@@ -395,6 +394,74 @@ class RoundManager:
             return round_state.scenario, 1
         return round_state.scenario2, 2
 
+    async def trigger_shock(self, direction: str) -> dict:
+        """Admin button: force an extreme price move (surge or crash) for the next SHOCK_DURATION_SECONDS."""
+        scenario = {"positive": "surge", "negative": "crash"}.get(direction)
+        if scenario is None:
+            raise ValueError("Direction must be positive or negative")
+
+        round_state = self.game_state.round_state
+        if not round_state.is_active:
+            raise RuntimeError("No active round")
+        if round_state.is_paused:
+            raise RuntimeError("Round is paused")
+        if round_state.shock_scenario:
+            raise RuntimeError("A shock is already running")
+
+        round_state.shock_scenario = scenario
+        round_state.shock_ticks_remaining = self.SHOCK_DURATION_SECONDS
+        round_state.shock_start_price = round_state.current_mid_price
+        round_state.shock_applied = True
+
+        progress = (
+            round_state.elapsed_seconds / round_state.duration_seconds
+            if round_state.duration_seconds
+            else 0.0
+        )
+        _, phase_number = self._phase_for_progress(round_state, progress)
+        await self._broadcaster(
+            "market_signal_update",
+            {
+                "round_number": round_state.round_number,
+                "phase_number": phase_number,
+                "active_scenario": scenario,
+                "market_signals": market_signal_to_dict(get_market_signal(scenario)),
+            },
+        )
+        return {"status": "shock_started", "direction": direction, "duration_seconds": self.SHOCK_DURATION_SECONDS}
+
+    def _next_shock_price(self, round_state: RoundState) -> float:
+        shock = round_state.shock_scenario
+        ticks_left = round_state.shock_ticks_remaining
+        game_start_price = self.game_state.game_start_price
+        if self.game_state.price_mode == "easy":
+            done = self.SHOCK_DURATION_SECONDS - ticks_left + 1
+            price = self.market_maker.calculate_sine_mid_price(
+                game_start_price=game_start_price,
+                scenario=shock,
+                scenario_start_price=round_state.shock_start_price,
+                phase_progress=done / self.SHOCK_DURATION_SECONDS,
+            )
+        else:
+            price = self.market_maker.calculate_next_mid_price(
+                previous_mid=round_state.current_mid_price,
+                game_start_price=game_start_price,
+                round_start_price=round_state.start_price,
+                target_end_price=round_state.target_end_price,
+                scenario=shock,
+                progress=0.0,
+                is_final_round=round_state.is_final_round,
+                scenario_start_price=round_state.shock_start_price,
+                is_scenario_phase_end=ticks_left <= 1,
+            )
+
+        round_state.shock_ticks_remaining -= 1
+        if round_state.shock_ticks_remaining <= 0:
+            round_state.shock_scenario = None
+            # The regular scenario resumes from the post-shock price
+            round_state.scenario_phase_start_price = price
+        return price
+
     def _next_mid_price(
         self,
         round_state: RoundState,
@@ -402,6 +469,8 @@ class RoundManager:
         progress: float,
         is_scenario_phase_end: bool,
     ) -> float:
+        if round_state.shock_scenario:
+            return self._next_shock_price(round_state)
         game_start_price = self.game_state.game_start_price
         if self.game_state.price_mode == "easy":
             switch = round_state.scenario_switch_progress

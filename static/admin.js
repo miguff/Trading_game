@@ -25,7 +25,8 @@
     let resumeButton = null;
     let endButton = null;
     let restartButton = null;
-
+    let shockPositiveButton = null;
+    let shockNegativeButton = null;
     let totalRoundsInput = null;
     let durationSecondsInput = null;
     let nextScenarioSelect = null;
@@ -74,6 +75,8 @@
         resumeButton = document.getElementById('resume-round');
         endButton = document.getElementById('end-round');
         restartButton = document.getElementById('restart-game');
+        shockPositiveButton = document.getElementById('shock-positive');
+        shockNegativeButton = document.getElementById('shock-negative');
 
         totalRoundsInput = document.getElementById('total-rounds');
         durationSecondsInput = document.getElementById('duration-seconds');
@@ -154,6 +157,14 @@
 
         if (releaseBriefingButton) {
             releaseBriefingButton.addEventListener('click', releaseBriefing);
+        }
+
+        if (shockPositiveButton) {
+            shockPositiveButton.addEventListener('click', () => triggerShock('positive'));
+        }
+
+        if (shockNegativeButton) {
+            shockNegativeButton.addEventListener('click', () => triggerShock('negative'));
         }
 
         if (durationSecondsInput) {
@@ -439,6 +450,12 @@
         }
 
         // Update configuration inputs
+        const shockVisible = round_active && !round_paused;
+        [shockPositiveButton, shockNegativeButton].forEach((button) => {
+            if (!button) return;
+            button.classList.toggle('hidden', !shockVisible);
+            button.disabled = !!gameStatus.shock_active;
+        });
         if (!userEditedTotalRounds && totalRoundsInput) {
             totalRoundsInput.value = total_rounds;
         }
@@ -626,6 +643,30 @@
         } catch (error) {
             showMessage('Failed to start round', 'error');
             console.error('[Admin] Start round error:', error);
+        }
+    }
+
+    async function triggerShock(direction) {
+        try {
+            const response = await fetch('/api/admin/trigger-shock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ direction })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMessage(data.detail || 'Failed to trigger shock', 'error');
+                return;
+            }
+
+            showMessage(`${direction === 'positive' ? 'Positive' : 'Negative'} shock triggered (${data.duration_seconds}s)`, 'success');
+            fetchStatus();
+        } catch (error) {
+            showMessage('Failed to trigger shock', 'error');
+            console.error('[Admin] Trigger shock error:', error);
         }
     }
 

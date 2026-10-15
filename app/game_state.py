@@ -143,6 +143,10 @@ class RoundState:
     scenario_path: List[float] = field(default_factory=list)
     elapsed_seconds: int = 0
     is_final_round: bool = False  # True if this is the last configured round
+    shock_scenario: Optional[str] = None  # "surge"/"crash" while an admin-triggered shock runs
+    shock_ticks_remaining: int = 0
+    shock_start_price: float = 0.0
+    shock_applied: bool = False  # A shock happened this round; skip scenario close enforcement
 
     def reset(self) -> None:
         self.round_number = 0
@@ -167,6 +171,12 @@ class RoundState:
         self.scenario_path = []
         self.elapsed_seconds = 0
         self.is_final_round = False
+        self.clear_shock()
+
+    def clear_shock(self) -> None:
+        self.shock_scenario = None
+        self.shock_ticks_remaining = 0
+        self.shock_applied = False
 
 class GameState:
     def __init__(self) -> None:
@@ -288,6 +298,7 @@ class GameState:
         # NOTE: price_history is NOT reset - it persists across rounds for continuous charts
         self.round_state.last_traded_price = start_price
         self.round_state.elapsed_seconds = 0
+        self.round_state.clear_shock()
         for player in self.players.values():
             player.reset_for_round(start_price, self.next_round_number)
         self.round_state.scenario_path = []
