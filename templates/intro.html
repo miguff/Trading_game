@@ -45,22 +45,113 @@
             <div class="intro-section">
                 <h2>Hogyan zajlik egy kör?</h2>
                 <ul>
-                    <li>A játék több, időzített körből áll. A játékvezető indítja el a köröket, a visszaszámláló a képernyőn látható.</li>
-                    <li>Minden kereskedés <strong>1 MWh</strong>. Vásárolni a kínálati (<em>Offer</em>), eladni a vételi (<em>Bid</em>) áron lehet.</li>
-                    <li>Mindenkinek van pozíciókorlátja (szerepkörönként más), ezt nem lehet túllépni.</li>
+                    <li>A játék több, időzített körből áll (alapértelmezés: 5 kör, egyenként 90 másodperc). A játékvezető indítja el a köröket, a visszaszámláló a képernyőn látható, és szüneteltetheti is a kört.</li>
+                    <li>Az első kör kezdőára <strong>50 EUR/MWh</strong>. Minden további kör az előző kör záróárán indul, így az ár folyamatos pályát jár be.</li>
+                    <li>Az ár a kör során a háttérben futó forgatókönyv szerint mozog (emelkedő, csökkenő vagy ingadozó), a kör közben akár váltva. A játékvezető hirtelen áremelkedést vagy árzuhanást is kiválthat.</li>
                     <li>A <strong>Market Signals</strong> panelen hírek és előrejelzések jelennek meg, ezek segítenek megsaccolni, merre mozdul az ár.</li>
                     <li>Az árfolyamot a gyertya- és vonaldiagram mutatja.</li>
-                    <li>A kör végén a nyitott pozíciód átkerül a következő körbe.</li>
                 </ul>
             </div>
 
             <div class="intro-section">
-                <h2>Az eredmény</h2>
+                <h2>Kereskedés: árak és pozíciókorlát</h2>
                 <ul>
-                    <li>A <strong>Round P&amp;L</strong> az adott kör eredménye: a Termelőnél a termelési költséghez, a Kiskereskedőnél a tarifához, a Kereskedőnél a pénzmozgásokhoz képest számolódik.</li>
-                    <li>A <strong>Cumulative P&amp;L</strong> a körök eredményeinek összege.</li>
-                    <li>Az utolsó kör végén a nyitott pozíciók a záróáron elszámolásra kerülnek.</li>
-                    <li>A játék végén ranglista készül, és látod, hogy jobban teljesítettél-e, mintha semmit sem csináltál volna.</li>
+                    <li>Minden kereskedés <strong>1 MWh</strong>, és azonnal teljesül a látható áron.</li>
+                    <li>Az ár két oldalú: <strong>Bid</strong> (vételi ár) és <strong>Offer</strong> (kínálati ár). Te a piac szemszögéből kereskedsz: <strong>vásárolni az Offer</strong>, <strong>eladni a Bid</strong> áron lehet.</li>
+                    <li>A különbség (spread) a középár (mid) <strong>1%-a</strong>: Bid = mid − 0,5%, Offer = mid + 0,5%. Példa: mid = 50,00 esetén Bid = 49,75, Offer = 50,25. Minden vétel-eladás pár ezért kerül egy kis költségbe.</li>
+                    <li>Pozíció = a birtokolt MWh (pozitív: többlet, negatív: hiány). Vétel +1, eladás −1.</li>
+                    <li>A pozíciót nem lehet a korláton túl vinni. A korlát mindig az adott kör kezdőpozíciójához igazodik:</li>
+                </ul>
+                <table class="summary-table">
+                    <thead>
+                        <tr><th>Szerepkör</th><th>Kiosztás körönként</th><th>Alsó korlát</th><th>Felső korlát</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Termelő</td><td>+10 MWh</td><td>0 (nem mehet negatívba)</td><td>átvitt pozíció + 20</td></tr>
+                        <tr><td>Kiskereskedő</td><td>−10 MWh</td><td>átvitt pozíció − 20</td><td>0 (nem lehet többlete)</td></tr>
+                        <tr><td>Kereskedő</td><td>0 MWh</td><td>átvitt pozíció − 10</td><td>átvitt pozíció + 10</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="intro-section">
+                <h2>Körök közötti átvitel és új kiosztás</h2>
+                <ul>
+                    <li>A kör végén a nyitott pozíciód <strong>átkerül a következő körbe</strong> (nem zárul le és nem számolódik el).</li>
+                    <li>Az új kör elején a Termelő újabb <strong>+10 MWh</strong>-t, a Kiskereskedő újabb <strong>−10 MWh</strong>-t kap hozzá az átvitt pozícióhoz. A Kereskedő nem kap kiosztást.</li>
+                    <li>Az önköltség és a tarifa <strong>minden körben újraszámolódik</strong> az új kör kezdőárából. Az átvitt MWh viszont a saját eredeti körének önköltségével / tarifájával számol (FIFO: a legrégebbi MWh fogy el először).</li>
+                    <li>A kör P&amp;L-je és a kör pénzárama minden körben nulláról indul; a kumulált P&amp;L viszont végig összeadódik.</li>
+                </ul>
+            </div>
+
+            <div class="intro-section">
+                <h2>Hogyan számoljuk a kör eredményét (Round P&amp;L)?</h2>
+                <p>
+                    A Round P&amp;L <strong>realizált</strong> eredmény: csak akkor változik, amikor kereskedsz.
+                    A nyitott pozíciód értéke ár-ingadozáskor nem változtatja, azt a játék végén számoljuk el.
+                    Minden egyes 1 MWh-s ügylet hozzájárulása:
+                </p>
+                <table class="summary-table">
+                    <thead>
+                        <tr><th>Szerepkör</th><th>Eladás (Bid áron)</th><th>Vétel (Offer áron)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Termelő</td><td>eladási ár − önköltség</td><td>önköltség − vételi ár</td></tr>
+                        <tr><td>Kiskereskedő</td><td>eladási ár − tarifa</td><td>tarifa − vételi ár</td></tr>
+                        <tr><td>Kereskedő</td><td>+ eladási ár</td><td>− vételi ár</td></tr>
+                    </tbody>
+                </table>
+                <ul>
+                    <li><strong>Termelő:</strong> az önköltség a kör kezdőárának 95%-a. Kezdőár 50 → önköltség 47,50 EUR/MWh. Eladásnál a megtermelt MWh önköltségéhez viszonyítunk; ha a bid ennél több, nyersz.</li>
+                    <li><strong>Kiskereskedő:</strong> a tarifa a kör kezdőárának 105%-a. Kezdőár 50 → tarifa 52,50 EUR/MWh. Vételnél azt nézzük, mennyivel olcsóbban szerezted be az energiát, mint amennyit az ügyfelektől kapsz.</li>
+                    <li><strong>Kereskedő:</strong> nincs viszonyítási alap, csak a pénzmozgás számít: az eladások összege mínusz a vételek összege.</li>
+                    <li>A kör eredménye az ügyletek hozzájárulásainak összege; a képernyőn a „Hogyan számoltuk a kör P&amp;L-t?” rész bontja is.</li>
+                </ul>
+                <p><strong>Példák</strong> (kezdőár 50 EUR/MWh, a számok csak illusztrációk):</p>
+                <ul>
+                    <li>Termelő 52,00-es Bid áron elad 1 MWh-t: 52,00 − 47,50 = <strong>+4,50 EUR</strong>.</li>
+                    <li>Kiskereskedő 49,00-es Offer áron vesz 1 MWh-t: 52,50 − 49,00 = <strong>+3,50 EUR</strong>.</li>
+                    <li>Kereskedő 50,25-ös Offer áron vesz, majd 51,75-ös Bid áron elad 1 MWh-t: −50,25 + 51,75 = <strong>+1,50 EUR</strong>.</li>
+                </ul>
+            </div>
+
+            <div class="intro-section">
+                <h2>Játék végi elszámolás (Settlement)</h2>
+                <ul>
+                    <li>Az utolsó kör <strong>záróára</strong> az <strong>elszámolóár</strong> (clearing price).</li>
+                    <li>Ekkor a még <strong>nyitott pozíciót</strong> is elszámoljuk ezen az áron, így nincs olyan MWh, ami „kimaradna” az eredményből:</li>
+                </ul>
+                <table class="summary-table">
+                    <thead>
+                        <tr><th>Szerepkör</th><th>Nyitott pozíció elszámolása</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Termelő</td><td>megmaradt MWh × (elszámolóár − az adott MWh önköltsége)</td></tr>
+                        <tr><td>Kiskereskedő</td><td>hiányzó MWh × (az adott MWh tarifája − elszámolóár)</td></tr>
+                        <tr><td>Kereskedő</td><td>pozíció (MWh) × elszámolóár</td></tr>
+                    </tbody>
+                </table>
+                <ul>
+                    <li><strong>Végső eredmény (Cumulative P&amp;L)</strong> = az összes kör Round P&amp;L-jének összege + a nyitott pozíció elszámolása.</li>
+                    <li>A Kereskedő negatív (short) pozíciója az elszámolóárnál veszteség lehet, ha az ár az eladás óta emelkedett.</li>
+                </ul>
+                <p>
+                    <strong>Példa Termelőre</strong> (egyszerűsítve egyetlen kör, kezdőár 50, önköltség 47,50, elszámolóár 55,00): eladsz 2 MWh-t 52,00-ért: 2 × (52,00 − 47,50) = 9,00 EUR.
+                    A maradék 8 MWh elszámolása: 8 × (55,00 − 47,50) = 60,00 EUR. Összesen: 9,00 + 60,00 = <strong>69,00 EUR</strong>.
+                </p>
+                <p>
+                    <strong>Példa Kereskedőre:</strong> vettél 3 MWh-t 50,25-ért (−150,75 EUR), nyitva hagytad, elszámolóár 55,00: 3 × 55,00 = +165,00 EUR. Összesen: −150,75 + 165,00 = <strong>+14,25 EUR</strong>.
+                </p>
+            </div>
+
+            <div class="intro-section">
+                <h2>Összehasonlítás a „semmittevéssel” és a ranglista</h2>
+                <ul>
+                    <li>A játék végén kiszámoljuk, mi lett volna az eredményed, ha <strong>egyáltalán nem kereskedsz</strong>: a kapott kiosztás teljes mennyiségét tartod, és az elszámolóáron számoljuk el az adott kör önköltségéhez / tarifájához képest. A Kereskedőnél ez 0 EUR.</li>
+                    <li><strong>Semmittevés eredménye</strong> = Σ (kör kiosztása × (elszámolóár − az adott kör önköltsége / tarifája)). Kiskereskedőnél a kiosztás negatív, ezért ott a tarifa − elszámolóár számít.</li>
+                    <li><strong>Különbség</strong> = tényleges eredmény − semmittevés eredménye. Ha pozitív, <strong>megverted az elszámolóárat</strong>: a kereskedésed többet hozott, mint a várakozás.</li>
+                    <li>A ranglista a végső (kumulált) eredmény szerint készül.</li>
+                    <li>Példa: a fenti Termelő a semmittevéssel 10 × (55,00 − 47,50) = 75,00 EUR-t kapott volna, így 69,00 − 75,00 = −6,00 EUR a különbség: túl korán adott el, mert az ár tovább emelkedett.</li>
                 </ul>
             </div>
 
