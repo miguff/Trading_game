@@ -1,4 +1,4 @@
-const sessionToken = localStorage.getItem('session_token');
+const sessionToken = sessionStorage.getItem('session_token');
 if (!sessionToken) {
     window.location.href = '/';
 }
@@ -8,7 +8,7 @@ const statusBox = document.getElementById('intro-status');
 const roleName = document.getElementById('intro-role-name');
 
 const ROLE_LABELS = { Generator: 'Termelő', Retailer: 'Kiskereskedő', Trader: 'Kereskedő' };
-const playerRole = localStorage.getItem('player_role');
+const playerRole = sessionStorage.getItem('player_role');
 roleName.textContent = ROLE_LABELS[playerRole] ? `${ROLE_LABELS[playerRole]} (${playerRole})` : '-';
 document.querySelectorAll('.intro-roles li').forEach((item) => {
     item.classList.toggle('highlight', item.dataset.role === playerRole);
@@ -30,7 +30,7 @@ function goToGame() {
 }
 
 function clearSessionAndRejoin() {
-    ['session_token', 'player_id', 'player_name', 'player_role'].forEach((key) => localStorage.removeItem(key));
+    ['session_token', 'player_id', 'player_name', 'player_role'].forEach((key) => sessionStorage.removeItem(key));
     window.location.href = '/';
 }
 

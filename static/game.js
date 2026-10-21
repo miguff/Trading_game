@@ -1,7 +1,7 @@
-const sessionToken = localStorage.getItem('session_token');
-const playerRole = localStorage.getItem('player_role') || '-';
-const playerName = localStorage.getItem('player_name') || '';
-const playerId = localStorage.getItem('player_id');
+const sessionToken = sessionStorage.getItem('session_token');
+const playerRole = sessionStorage.getItem('player_role') || '-';
+const playerName = sessionStorage.getItem('player_name') || '';
+const playerId = sessionStorage.getItem('player_id');
 
 if (!sessionToken) {
     window.location.href = '/';
@@ -49,10 +49,10 @@ const themeToggle = document.getElementById('theme-toggle');
 const tradeHistoryList = document.getElementById('trade-history-list');
 const tradeHistoryPanel = document.getElementById('trade-history-panel');
 
-const playerStartPosition = Number(localStorage.getItem('start_position') || '0');
-let playerCurrentPosition = Number(localStorage.getItem('current_position') || String(playerStartPosition));
-let playerCumulativePnl = Number(localStorage.getItem('cumulative_pnl') || '0');
-let playerRoundPnl = Number(localStorage.getItem('round_pnl') || '0');
+const playerStartPosition = Number(sessionStorage.getItem('start_position') || '0');
+let playerCurrentPosition = Number(sessionStorage.getItem('current_position') || String(playerStartPosition));
+let playerCumulativePnl = Number(sessionStorage.getItem('cumulative_pnl') || '0');
+let playerRoundPnl = Number(sessionStorage.getItem('round_pnl') || '0');
 let currentBid = null;
 let currentOffer = null;
 let currentLastPrice = null;
@@ -434,7 +434,7 @@ function updatePlayerDisplay(payload) {
     if (payload.last_traded_price !== undefined) {
         lastLabel.textContent = formatMoney(payload.last_traded_price);
     }
-    localStorage.setItem('current_position', String(playerCurrentPosition));
+    sessionStorage.setItem('current_position', String(playerCurrentPosition));
 }
 
 async function sendTrade(direction) {
@@ -654,10 +654,10 @@ function setRoundStarted(payload) {
         playerCumulativePnl = Number(roundPlayerState.cumulative_pnl);
     }
 
-    // Update localStorage with reset values
-    localStorage.setItem('current_position', String(playerCurrentPosition));
-    localStorage.setItem('round_pnl', String(playerRoundPnl));
-    localStorage.setItem('cumulative_pnl', String(playerCumulativePnl));
+    // Update sessionStorage with reset values
+    sessionStorage.setItem('current_position', String(playerCurrentPosition));
+    sessionStorage.setItem('round_pnl', String(playerRoundPnl));
+    sessionStorage.setItem('cumulative_pnl', String(playerCumulativePnl));
 
     // Update displayed position and round PnL
     positionLabel.textContent = playerCurrentPosition;
@@ -826,7 +826,7 @@ function setRoundEnded(payload) {
         // The header must show the same final value as the summary.
         playerRoundPnl = Number(myPlayerData.round_pnl);
         roundPnlLabel.textContent = formatMoney(playerRoundPnl);
-        localStorage.setItem('round_pnl', String(playerRoundPnl));
+        sessionStorage.setItem('round_pnl', String(playerRoundPnl));
 
         mySummaryHtml += buildRoundPnlExplanation(myPlayerData);
 
@@ -870,15 +870,15 @@ function setRoundEnded(payload) {
 }
 
 function handleGameRestarted(payload) {
-    // Clear all player state from localStorage
-    localStorage.removeItem('session_token');
-    localStorage.removeItem('player_id');
-    localStorage.removeItem('player_name');
-    localStorage.removeItem('player_role');
-    localStorage.removeItem('start_position');
-    localStorage.removeItem('current_position');
-    localStorage.removeItem('round_pnl');
-    localStorage.removeItem('cumulative_pnl');
+    // Clear all player state from sessionStorage
+    sessionStorage.removeItem('session_token');
+    sessionStorage.removeItem('player_id');
+    sessionStorage.removeItem('player_name');
+    sessionStorage.removeItem('player_role');
+    sessionStorage.removeItem('start_position');
+    sessionStorage.removeItem('current_position');
+    sessionStorage.removeItem('round_pnl');
+    sessionStorage.removeItem('cumulative_pnl');
 
     // Clear chart history
     lineHistory = [];

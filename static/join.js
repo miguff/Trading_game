@@ -21,10 +21,10 @@ form.addEventListener('submit', async (event) => {
             throw new Error(body.detail || 'Unable to join the game');
         }
         const payload = await response.json();
-        localStorage.setItem('session_token', payload.session_token);
-        localStorage.setItem('player_role', payload.role);
-        localStorage.setItem('player_name', name);
-        localStorage.setItem('player_id', payload.player_id);
+        sessionStorage.setItem('session_token', payload.session_token);
+        sessionStorage.setItem('player_role', payload.role);
+        sessionStorage.setItem('player_name', name);
+        sessionStorage.setItem('player_id', payload.player_id);
         window.location.href = '/intro';
     } catch (error) {
         errorBox.textContent = error.message || 'Join failed.';
