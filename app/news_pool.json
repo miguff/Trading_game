@@ -1,0 +1,92 @@
+{
+  "easy": {
+    "news": {
+      "up": [
+        "A hidegebb időjárásra vonatkozó előrejelzések, a francia nukleáris energiatermeléssel kapcsolatos aggályok, a tárolók apadása, az emelkedő szén-dioxid-kvótaárak és a fokozódó geopolitikai feszültségek hatására a TTF DA 5%-kal emelkedett.",
+        "Az azonnali ár 33%-kal emelkedett, miután az Egyesült Államok és Izrael támadást indított Irán ellen, ezt követően pedig felfüggesztették a hajóforgalmat a Hormuzi-szoros térségében, és a QatarEnergy vis maiort jelentett.",
+        "A TTF DA ismét meredeken, további 23%-kal emelkedett, mivel a konfliktus enyhülésének továbbra sincs jele. Az LNG-ellátással kapcsolatos aggodalmak jelentik a fő kockázatot az európai gázpiacok számára.",
+        "Irán ígéretéhez híven válaszcsapást mért, és kétszer is eltalálta Ras Laffant. A QatarEnergy jelentése szerint jelentős károk keletkeztek, így a termelés 17%-a (12,8 millió tonna) a következő 3–5 évben kieshet.",
+        "Az Egyesült Államok és Irán kölcsönös támadásokat indított, és megsértette a tűzszünetet, miután Irán három hajót – köztük egy katari LNG-szállító tartályhajót – talált el a Hormuzi-szorosban.",
+        "A TTF DA 11%-kal emelkedett, miután szertefoszlottak a Hormuzi-szoros újranyitásával kapcsolatos remények, mivel az Egyesült Államok elutasította Irán követeléseit. A hajózás elleni támadások további kockázati prémiumot építettek be az árakba.",
+        "A TTF folytatta az emelkedést, és a pénteki zárás óta már 9%-kal került feljebb. A téli tárolói készletekkel kapcsolatos aggodalmak, a QatarEnergy vis maior helyzete és a továbbra is fennálló geopolitikai feszültségek támogatják az árakat.",
+        "Az EU gáztárolóinak töltöttsége június 23-án 50 milliárd köbméter, a teljes kapacitás 46%-a volt. Ez 10,6 milliárd köbméterrel maradt el az előző év azonos időpontjától, és 15 milliárd köbméterrel az ötéves átlagtól.",
+        "Az AGSI+ adatai szerint az EU föld alatti gáztárolóinak töltöttsége július 10-én 51,5% volt, szemben az előző hétvégi 49,7%-kal. Ez 17,0 százalékponttal maradt el az előző év azonos időszakától, és 22,9 százalékponttal az ötéves átlagtól."
+      ],
+      "down": [
+        "A TTF DA 12%-kal esett, miután Trump nyilatkozata megnyugtatta a piacokat; a csökkenést tovább erősítette a profitrealizálás, mivel a DA árfolyama 13 havi csúcson járt.",
+        "A DA két kereskedési nap alatt 13%-kal csökkent a tűzszünettel kapcsolatos optimista várakozások, valamint részben az alacsonyabb keresleti előrejelzések hatására.",
+        "A gázárak 11%-kal estek az elmúlt négy kereskedési nap során. A közel-keleti békemegállapodás optimizmust keltett, Trump legutóbbi megjegyzései azonban ismét kétségeket ébresztettek."
+      ],
+      "oscillate": [
+        "A közel-keleti feszültségek továbbra is magasak, az energiaáramlás azonban fennakadások nélkül folytatódik.",
+        "Folytatódnak a tűzszüneti tárgyalások, de jelentős áttörésről nem érkezett hír.",
+        "Új szankciók bevezetéséről tárgyalnak, az energiaexportot azonban egyelőre nem érinti a helyzet.",
+        "A hajózással kapcsolatos aggodalmak továbbra is fennállnak, miközben a fő energia-szállítási útvonalak működőképesek maradtak.",
+        "A továbbra is fennálló regionális feszültségek közepette újraindultak a diplomáciai tárgyalások."
+      ]
+    },
+    "weather": {
+      "up": [
+        "A francia atomerőműveknek egyre magasabb folyóvíz-hőmérsékletekkel kell szembenézniük.",
+        "A magas vízhőmérséklet miatt várhatóan két francia atomreaktort teljesen leállítanak, további négy blokknál pedig tervezett teljesítménykorlátozás lép életbe. Az alacsony folyóvízszint miatt várhatóan egy további atomreaktor is leáll.",
+        "Eközben a német szélerőművi termelés várhatóan 8,1 GW-tal, 4,7 GW-ra csökken, ami mintegy 60%-kal marad el az év ezen időszakára jellemző átlagtól – derült ki az LSEG adataiból."
+      ],
+      "down": [
+        "Májusban a napenergia vált az EU27 legnagyobb villamosenergia-termelési forrásává, a termelési mix 22,57%-át adva. A napenergia-termelés új havi rekordot ért el 48 TWh-val, ami csaknem megegyezik Magyarország éves villamosenergia-igényével."
+      ],
+      "oscillate": [
+        "Közép-Európában hidegebb idő várható, miközben Nyugat-Európában az évszakos átlagnál enyhébb marad az időjárás.",
+        "Észak-Európában a szélerőművi termelés erősödése várható, miközben a hidegebb idő növeli a fűtési célú keresletet.",
+        "A jövő héten csökkenhet a hőmérséklet, az előrejelzések azonban csak rövid ideig tartó lehűlést jeleznek.",
+        "Alacsonyabb szélerőművi termelés várható, amit a fő fogyasztási központokban az átlagosnál magasabb hőmérséklet ellensúlyoz."
+      ]
+    }
+  },
+  "hard": {
+    "news": {
+      "up": [
+        "Increased short covering amidst last weeks increase plus colder tempertures and storage concerns see prices might rocket a further",
+        "Rising Geopolitical tensions and chances of US attack on Iran ratchet up.",
+        "Markets soar once more after an US attack on the South Pars gas field. Iran promises to hit energy assets in the region \"in the coming hous\"",
+        "Further uncertainty around the ceasefire and a potential US blockade of Iranian ports could increase market volatility",
+        "LNG concerns resurface after Qatar Energy extended force majeure LNG into Italy and one Asian buyer",
+        "Houthi involment, escalation in attacks and rhetoric between US/Iran dimming peace prospects",
+        "US/Iran attacks intensify, several tankers hit by projectiles in the SoH futher dashing hopes of a reopening.",
+        "Europe entered the summer injection season in a significantly weaker position than in the last few years"
+      ],
+      "down": [
+        "Easing Geopolitical risk as Trump confirms Iran talks ongoing. Broader energy complex sell off and warmer weather",
+        "Gas markets slump and stock markets rally as a last minute two week ceasefire and reopening of the SOH is confirmed",
+        "Renewed ceasefire hopes, soft fundamentals;loose demand amid warmer weather allowing for robust injections into storage",
+        "US pause atacks on Iran and Iran also halt regional attacks to allow peace talks to resume."
+      ],
+      "oscillate": [
+        "Diplomatic talks resume amid continued regional tensions",
+        "Market monitors geopolitical developments as no immediate impact on energy supply is observed",
+        "European gas storage withdrawals increase amid colder weather, while steady LNG arrivals keep supply concerns contained.",
+        "Norwegian gas flows remain stable despite minor maintenance at several facilities."
+      ]
+    },
+    "weather": {
+      "up": [
+        "European gas storage is under pressure at the start of the 2026 injection season, with inventories entering April at around 28%, below last year’s 35%",
+        "Prices jumped in late June and mid-July ahead of the worst days of the heatwave, as buyers in the electricity market scrambled to cover high demand for cooling. Price pressures were exacerbated by reduced output from French nuclear and German and British gas power plants, as well as European wind turbines as the heat brought low wind speeds and reduced output from wind farms.",
+        "High temperatures in the rivers cooling France's plants are expected for much of summer.",
+        "When temperatures peaked at over 40 C, French nuclear output was cut for several days by over 9 gigawatts for 12 reactors out of the 57 total, Kpler data showed.",
+        "The heatwave will also increase power demand as people turn on fans and air conditioners, providing more pressure to prices."
+      ],
+      "down": [
+        "Mild European Winter Outlook Points to Lower Heating Demand",
+        "Strong Atlantic Winds Could Boost European Wind Generation and Cut Gas-for-Power Demand",
+        "Central Europe Warm Signal Strengthens, Easing Early Heating-Demand Concerns",
+        "Mild, Wet and Windy Start to Winter Could Give Europe’s Gas Market Much-Needed Relief"
+      ],
+      "oscillate": [
+        "Solar output improves across Southern Europe while wind generation weakens in the North",
+        "Weather models remain mixed, showing no clear temperature trend for the coming two weeks",
+        "Storage levels remain below last year's levels but broadly in line with market expectations.",
+        "Asian LNG demand strengthens slightly, while European import availability remains comfortable."
+      ]
+    }
+  }
+}

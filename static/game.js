@@ -552,15 +552,15 @@ function renderForecastCards(cards) {
     let html = '';
     cards.forEach((card, index) => {
         const chartSvg = renderMiniChart(card.chart_type, card.values, card.color);
-        const probLabel = card.value_label || (card.probability !== undefined ? `${card.probability}%` : '');
+        const probLabel = card.value_label || (card.probability != null ? `${card.probability}%` : '');
 
         html += `
             <div class="forecast-card ${card.type}-card">
                 <div class="forecast-card-header">
                     <span class="forecast-title">${card.title}</span>
-                    <span class="forecast-probability">${probLabel}</span>
+                    ${probLabel ? `<span class="forecast-probability">${probLabel}</span>` : ''}
                 </div>
-                <div class="forecast-chart">${chartSvg}</div>
+                ${chartSvg ? `<div class="forecast-chart">${chartSvg}</div>` : ''}
                 <div class="forecast-summary">${card.summary}</div>
             </div>
         `;
@@ -742,11 +742,6 @@ function buildSettlementHtml(settlement) {
         'Összehasonlítottuk, mi történt volna, ha nem kereskedsz, hanem a kapott kiosztás teljes mennyiségét tartod az elszámolásig.</p>';
 
     if (me) {
-        const verdict = me.beat_market
-            ? 'Megverted az elszámolóárat: a kereskedésed többet hozott, mint a semmittevés.'
-            : (me.difference === 0
-                ? 'Az eredményed megegyezik a semmittevéssel.'
-                : 'Nem verted meg az elszámolóárat: semmittevéssel jobban jártál volna.');
         const priceTerm = me.reference_price > 0
             ? `(${formatMoney(clearing)} − ${formatMoney(me.reference_price)})`
             : formatMoney(clearing);
@@ -767,8 +762,7 @@ function buildSettlementHtml(settlement) {
             '</tbody></table>' +
             `<p><strong>Semmittevés eredménye:</strong> ${formatMoney(me.do_nothing_pnl)} EUR | ` +
             `<strong>A te eredményed:</strong> ${formatMoney(me.actual_pnl)} EUR | ` +
-            `<strong>Különbség:</strong> ${formatMoney(me.difference)} EUR</p>` +
-            `<p><strong>${verdict}</strong></p>`;
+            `<strong>Különbség:</strong> ${formatMoney(me.difference)} EUR</p>`;
 
         if (me.trades.length > 0) {
             html += '<h4>Ügyleteid</h4>' +
@@ -782,10 +776,10 @@ function buildSettlementHtml(settlement) {
     }
 
     html += '<h4>Mindenki elszámolása</h4>' +
-        '<table class="summary-table"><thead><tr><th>Név</th><th>Szerep</th><th>Semmittevés</th><th>Tényleges</th><th>Különbség</th><th>Megverte a piacot?</th></tr></thead><tbody>' +
+        '<table class="summary-table"><thead><tr><th>Név</th><th>Szerep</th><th>Semmittevés</th><th>Tényleges</th><th>Különbség</th></tr></thead><tbody>' +
         settlement.players.map((p) =>
             `<tr><td>${p.name}</td><td>${p.role}</td><td>${formatMoney(p.do_nothing_pnl)} EUR</td><td>${formatMoney(p.actual_pnl)} EUR</td>` +
-            `<td>${formatMoney(p.difference)} EUR</td><td>${p.beat_market ? 'Igen' : 'Nem'}</td></tr>`
+            `<td>${formatMoney(p.difference)} EUR</td></tr>`
         ).join('') +
         '</tbody></table>';
     return html;

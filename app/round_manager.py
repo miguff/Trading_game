@@ -500,7 +500,7 @@ class RoundManager:
         round_state = self.game_state.round_state
         active_scenario, phase_number = self._phase_for_progress(round_state, progress)
         signal_seed = round_state.round_number + (phase_number - 1) * 3
-        signal = get_market_signal(active_scenario, seed=signal_seed)
+        signal = get_market_signal(active_scenario, seed=signal_seed, mode=self.game_state.price_mode)
         return {
             "round_number": round_state.round_number,
             "phase_number": phase_number,
