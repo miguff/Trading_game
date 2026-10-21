@@ -596,7 +596,7 @@ async def trade(request: Request):
                     "bid": p.bid,
                     "offer": p.offer,
                 }
-                for p in round_state.price_history[-60:]
+                for p in round_state.price_history[-600:]
             ],
             "remaining_seconds": remaining_seconds,
         },
@@ -659,7 +659,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                 "bid": p.bid,
                                 "offer": p.offer,
                             }
-                            for p in round_state.price_history[-60:]
+                            for p in round_state.price_history[-600:]
                         ],
                         "remaining_seconds": remaining_seconds,
                     },
